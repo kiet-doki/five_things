@@ -1,0 +1,284 @@
+---
+title: "Five Things"
+output: html_document
+date: "2024-05-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Libraries used 
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(bigrquery)
+library(readr)
+library(tidyr)
+library(stringr)
+library(tm)
+library(cluster)
+library(tidytext)
+```
+
+
+
+### Overview
+
+OVERARCHING Question: How to help an instructor build a course that will make LA work better?
+
+
+
+### Establish connection to bigquery to pull data into R studio
+
+```{r connection, include=FALSE}
+
+#connect to UW instance of bigquery
+ bq_auth(
+   email = "netid@wisc.edu",
+   path = NULL,
+   scopes = "https://www.googleapis.com/auth/bigquery",
+   cache = gargle::gargle_oauth_cache(),
+   use_oob = gargle::gargle_oob_default(),
+   token = NULL
+ )
+```
+
+### Pull interaction session data
+
+```{r pull_data, include=FALSE}
+
+# projectid = "udp-wisc-prod"
+
+# static snapshot
+projectid = "doit-at-lace-analytics-1764"
+
+
+# ASSIGNMENTS
+sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.assignments_2024_07`"
+tb <- bq_project_query(projectid, sql)
+assignment_data_master <- bq_table_download(tb)
+assignment_data <- (assignment_data_master)
+
+
+# DISCUSSIONS
+sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.discussions_2024_07`"
+tb <- bq_project_query(projectid, sql)
+discussion_data_master <- bq_table_download(tb)
+discussion_data <- (discussion_data_master)
+
+
+# FILES
+sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.files_2024_07`"
+tb <- bq_project_query(projectid, sql)
+file_data_master <- bq_table_download(tb)
+file_data <- (file_data_master)
+
+
+# LMS
+sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.lms_tool_data_2024_07`"
+tb <- bq_project_query(projectid, sql)
+lms_data_master <- bq_table_download(tb)
+lms_data <- (lms_data_master)
+
+
+# LTI
+sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.lti_tool_data_2024_07`"
+tb <- bq_project_query(projectid, sql)
+lti_data_master <- bq_table_download(tb)
+lti_data <- (lti_data_master)
+
+
+# MODULES
+sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.module_2024_07`"
+tb <- bq_project_query(projectid, sql)
+module_data_master <- bq_table_download(tb)
+module_data <- (module_data_master)
+
+
+# QUIZZES
+sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.quizzes_2024_07`"
+tb <- bq_project_query(projectid, sql)
+quiz_data_master <- bq_table_download(tb)
+quiz_data <- (quiz_data_master)
+```
+## Assignments
+
+
+# Assignment Group Rules 
+
+Setting up assignment group rules, such as dropping the lowest score, can help instructors achieve a more accurate understanding of student performance. This approach allows them to recognize overall trends without being skewed by outliers.
+
+
+
+```{r}
+drop_rule_assignment_counts <- assignment_data |>
+  count(drop_rule)
+
+print(drop_rule_assignment_counts)
+
+never_drop_assignments <- assignment_data |>
+  filter(drop_rule == "never_drop")
+
+print(never_drop_assignments)
+
+
+```
+
+The only four assignments that are "never drop" are end-of-semester surveys or reflections. This has minimal effect on the understanding of student performance.
+
+
+
+
+
+
+# Detailed Setup
+
+Providing clear names, points, and due dates for assignments can help instructors get detailed tracking and analytics on assignment completion rates, punctuality, and performance.
+
+
+
+```{r}
+missing_assignemt_details <- assignment_data |>
+  summarise(
+    missing_titles = sum(is.na(title)),
+    missing_points = sum(is.na(points_possible)),
+    missing_due_dates = sum(is.na(due_date))
+  )
+
+print(missing_assignemt_details)
+
+
+assignment_counts <- assignment_data |>
+  group_by(course_number) |>
+  summarise(total_assignments = n())
+
+print(assignment_counts)
+
+
+# Identify classes with the most missing points
+missing_points_by_class <- assignment_data |>
+  group_by(course_number) |>
+  summarise(missing_points = sum(is.na(points_possible))) |>
+  arrange(desc(missing_points))
+
+print(missing_points_by_class)
+
+
+# Identify classes with the most missing due dates
+missing_due_dates_by_class <- assignment_data |>
+  group_by(course_number) |>
+  summarise(missing_due_dates = sum(is.na(due_date))) |>
+  arrange(desc(missing_due_dates))
+
+print(missing_due_dates_by_class)
+
+
+# Merge two missing-details datasets
+merged_missing_points_and_due_dates <- full_join(missing_points_by_class, missing_due_dates_by_class, by = 'course_number')
+
+print(merged_missing_points_and_due_dates)
+```
+
+Course number 006721, 003760, 019258 are the three with most missing details.
+
+
+```{r}
+preprocessed_titles <- assignment_data |>
+  mutate(title = str_to_lower(title)) |> # convert to lowercase
+  mutate(title = str_replace_all(title, "[^a-z]", ""))  # remove punctuation
+  #mutate(title = str_squish(title)) # remove white space  
+
+head(preprocessed_titles)
+
+tokens <- preprocessed_titles |>
+  unnest_tokens(word, title)
+
+print(tokens)
+
+word_counts <- tokens |>
+  count(word, sort = TRUE)
+
+print(word_counts)
+
+
+word_counts |>
+  top_n(20) |>
+  ggplot(aes(reorder(word, n), n)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Most Common Words in Assignment Titles", x = "Words", y = "Frequency") +
+  theme_minimal()
+
+```
+
+
+
+```{r}
+title_length <- assignment_data |>
+  mutate(title_length = str_length(title))
+
+title_length_summary <- title_length |>
+  summarize(avg_length = mean(title_length, na.rm = TRUE),
+            median_length = median(title_length, na.rm = TRUE),
+            max_length = max(title_length, na.rm = TRUE),
+            min_length = min(title_length, na.rm = TRUE))
+
+print(title_length_summary)
+
+ggplot(title_length, aes(x = title_length)) +
+  geom_histogram(binwidth = 5, fill = "blue", color = "black") +
+  labs(title = "Distribution of Assignment Title Lengths", x = "Title Length", y = "Frequency") +
+  theme_minimal()
+
+```
+
+```{r}
+# Check for the presence of "week" followed by a number in the title
+week_pattern <- assignment_data |>
+  mutate(has_week = str_detect(title, "week \\d+"))
+
+# Calculate the percentage
+week_pattern_summary <- week_pattern |>
+  summarize(
+    percentage_with_week = mean(has_week, na.rm = TRUE) * 100,
+    percentage_without_week = 100 - mean(has_week, na.rm = TRUE) * 100
+  )
+
+# Convert to long format for plotting
+week_pattern_long <- week_pattern_summary |>
+  pivot_longer(cols = everything(), names_to = "week_presence", values_to = "percentage")
+
+# Plot the percentages
+ggplot(week_pattern_long, aes(x = "", y = percentage, fill = week_presence)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = round(percentage, 2)), position = position_fill(vjust = 0.5), size = 5) +
+  scale_fill_manual(values = c("skyblue", "tomato")) +
+  labs(title = "How often do instructors include week numbers in titles?",
+       y = "Percentage",
+       x = "",
+       fill = "% With Week Number") +
+  theme_minimal()
+
+
+```
+
+```{r}
+quiz_count <- quiz_data |>
+  group_by(course_number) |>
+  summarise(number_of_quizzes = n())
+```
+
+
+
+
+
+```{r}
+
+
+```
+
+
+
+
+
+
