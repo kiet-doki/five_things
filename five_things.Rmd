@@ -1,6 +1,8 @@
 ---
 title: "Five Things"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 date: "2024-05-29"
 ---
 
@@ -61,38 +63,38 @@ assignment_data <- (assignment_data_master)
 
 
 # DISCUSSIONS
-sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.discussions_2024_07`"
-tb <- bq_project_query(projectid, sql)
-discussion_data_master <- bq_table_download(tb)
-discussion_data <- (discussion_data_master)
+#sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.discussions_2024_07`"
+#tb <- bq_project_query(projectid, sql)
+#discussion_data_master <- bq_table_download(tb)
+#discussion_data <- (discussion_data_master)
 
 
 # FILES
-sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.files_2024_07`"
-tb <- bq_project_query(projectid, sql)
-file_data_master <- bq_table_download(tb)
-file_data <- (file_data_master)
+#sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.files_2024_07`"
+#tb <- bq_project_query(projectid, sql)
+#file_data_master <- bq_table_download(tb)
+#file_data <- (file_data_master)
 
 
 # LMS
-sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.lms_tool_data_2024_07`"
-tb <- bq_project_query(projectid, sql)
-lms_data_master <- bq_table_download(tb)
-lms_data <- (lms_data_master)
+#sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.lms_tool_data_2024_07`"
+#tb <- bq_project_query(projectid, sql)
+#lms_data_master <- bq_table_download(tb)
+#lms_data <- (lms_data_master)
 
 
 # LTI
-sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.lti_tool_data_2024_07`"
-tb <- bq_project_query(projectid, sql)
-lti_data_master <- bq_table_download(tb)
-lti_data <- (lti_data_master)
+#sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.lti_tool_data_2024_07`"
+#tb <- bq_project_query(projectid, sql)
+#lti_data_master <- bq_table_download(tb)
+#lti_data <- (lti_data_master)
 
 
 # MODULES
-sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.module_2024_07`"
-tb <- bq_project_query(projectid, sql)
-module_data_master <- bq_table_download(tb)
-module_data <- (module_data_master)
+#sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.module_2024_07`"
+#tb <- bq_project_query(projectid, sql)
+#module_data_master <- bq_table_download(tb)
+#module_data <- (module_data_master)
 
 
 # QUIZZES
@@ -100,6 +102,22 @@ sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.quizzes_2024_07`"
 tb <- bq_project_query(projectid, sql)
 quiz_data_master <- bq_table_download(tb)
 quiz_data <- (quiz_data_master)
+
+
+# QUIZZES 2
+sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.quizzesv2_2024_08`"
+tb <- bq_project_query(projectid, sql)
+quiz2_data_master <- bq_table_download(tb)
+quiz2_data <- (quiz2_data_master)
+
+
+# QUIZZES 3
+sql <- "SELECT * FROM `doit-at-lace-analytics-1764.5_things.quizzesv3_2024_08`"
+tb <- bq_project_query(projectid, sql)
+quiz3_data_master <- bq_table_download(tb)
+quiz3_data <- (quiz3_data_master)
+
+
 ```
 ## Assignments
 
@@ -110,7 +128,7 @@ Setting up assignment group rules, such as dropping the lowest score, can help i
 
 
 
-```{r}
+```{r,  echo=FALSE}
 drop_rule_assignment_counts <- assignment_data |>
   count(drop_rule)
 
@@ -137,7 +155,7 @@ Providing clear names, points, and due dates for assignments can help instructor
 
 
 
-```{r}
+```{r,  echo=FALSE}
 missing_assignemt_details <- assignment_data |>
   summarise(
     missing_titles = sum(is.na(title)),
@@ -182,7 +200,7 @@ print(merged_missing_points_and_due_dates)
 Course number 006721, 003760, 019258 are the three with most missing details.
 
 
-```{r}
+```{r,  echo=FALSE}
 preprocessed_titles <- assignment_data |>
   mutate(title = str_to_lower(title)) |> # convert to lowercase
   mutate(title = str_replace_all(title, "[^a-z]", ""))  # remove punctuation
@@ -209,11 +227,48 @@ word_counts |>
   labs(title = "Most Common Words in Assignment Titles", x = "Words", y = "Frequency") +
   theme_minimal()
 
+
+
+
+
+
+
+
+
+cleaned_assignment_titles <- assignment_data |>
+  mutate(cleaned_title = str_to_lower(title)) |>               # Convert to lowercase
+  mutate(cleaned_title = str_replace_all(cleaned_title, "[^a-z]", ""))  # Remove punctuation
+
+# Filter out titles containing specific keywords
+filtered_assignment_titles <- cleaned_assignment_titles |>
+  filter(!str_detect(cleaned_title, "(quiz|assignment|lab|exam|discussion|lesson|assessment)"))
+
+# Tokenize the titles into words
+title_words <- filtered_assignment_titles |>
+  unnest_tokens(word, cleaned_title)
+
+# Count the frequency of each word
+common_words <- title_words |>
+  count(word, sort = TRUE)
+
+# Print the word counts
+print(common_words)
+
+# Visualize the top 20 most common words
+common_words |>
+  top_n(20) |>
+  ggplot(aes(reorder(word, n), n)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Most Common Words in Assignment Titles (Excluding Specific Types)", 
+       x = "Words", 
+       y = "Frequency") +
+  theme_minimal()
 ```
 
 
 
-```{r}
+```{r,  echo=FALSE}
 title_length <- assignment_data |>
   mutate(title_length = str_length(title))
 
@@ -233,6 +288,37 @@ ggplot(title_length, aes(x = title_length)) +
 ```
 
 ```{r}
+
+assignment_data <- assignment_data |> 
+  mutate(title_lower = str_to_lower(title)) |> 
+  mutate(contains_week = str_detect(title_lower, "week")) |> 
+  mutate(contains_type = str_detect(title_lower, "(quiz|assignment|lab|exam|discussion|lesson)"))
+
+# Percentages of titles with week and assignment type
+week_pattern_percentage <- assignment_data |> 
+  summarize(percent_with_week = mean(contains_week, na.rm = TRUE) * 100)
+
+type_pattern_percentage <- assignment_data |> 
+  summarize(percent_with_type = mean(contains_type, na.rm = TRUE) * 100)
+
+print(week_pattern_percentage)
+print(type_pattern_percentage)
+
+assignment_data |> 
+  count(contains_week, contains_type) |> 
+  ggplot(aes(x = contains_week, y = contains_type, fill = n)) +
+  geom_tile() +
+  labs(title = "Consistency of Naming Conventions", x = "Contains Week Number", y = "Contains Type of Activity") +
+  theme_minimal()
+
+
+```
+
+
+
+
+
+```{r,  echo=FALSE}
 # Check for the presence of "week" followed by a number in the title
 week_pattern <- assignment_data |>
   mutate(has_week = str_detect(title, "week \\d+"))
@@ -262,21 +348,219 @@ ggplot(week_pattern_long, aes(x = "", y = percentage, fill = week_presence)) +
 
 ```
 
-```{r}
+```{r,  echo=FALSE}
 quiz_count <- quiz_data |>
   group_by(course_number) |>
   summarise(number_of_quizzes = n())
 ```
 
 
+```{r,  echo=FALSE}
+ggplot(quiz_data, aes(x = quiz_points_possible)) +
+  geom_histogram(binwidth = 5, fill = 'lightblue', color = 'black') +
+  theme_minimal() +
+  labs(title = "Distribution of Quiz Points Possible", x = "Quiz Points Possible", y = "Count")
+```
+
+The distribution of quiz points possible across the courses provides insights into the design and structure of assessments. The histogram reveals the range and frequency of points assigned to quizzes. Since the distribution is skewed and contains outliers, it might indicate inconsistencies in how instructors assign weight to different assessments. Ensuring that quiz points are thoughtfully allocated and consistently applied is vital for meaningful data analysis and for students to understand the relative importance of each quiz in their overall grade.
+
+```{r,  echo=FALSE}
+quiz_data |>
+  group_by(course_number) |>
+  summarise(quiz_count = n()) |>
+  ggplot(aes(x = reorder(course_number, quiz_count), y = quiz_count)) +
+  geom_bar(stat = 'identity', fill = 'green', color = 'black') +
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "Number of Quizzes per Course", x = "Course Number", y = "Quiz Count")
+```
+This bar plot illustrates the number of quizzes administered across various courses. Courses with a higher number of quizzes suggest a greater emphasis on continuous assessment, which can be beneficial for keeping students engaged and providing regular feedback. However, it's also important to consider whether the volume of quizzes aligns with the course's learning objectives. If some courses have a disproportionately high or low number of quizzes, it may indicate a need for standardizing assessment strategies across the curriculum to ensure consistency in grading and data collection practices.
 
 
 
-```{r}
+
+```{r,  echo=FALSE}
+quiz_data |>
+  mutate(quiz_created_year = as.integer(format(quiz_created_date, "%Y")),
+         quiz_created_month = as.integer(format(quiz_created_date, "%m")),
+         year_month = as.Date(paste(quiz_created_year, quiz_created_month, "01", sep = "-"))) |>
+  group_by(year_month) |>
+  summarise(quiz_count = n()) |>
+  ggplot(aes(x = year_month, y = quiz_count)) +
+  geom_line(color = "purple") +
+  geom_point(color = "purple") +
+  scale_x_date(date_breaks = "1 month", date_labels = "%Y-%m") +
+  labs(title = "Quizzes Created Over Time",
+       x = "Year-Month",
+       y = "Quiz Count") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
+Tracking the creation of quizzes over time provides valuable insights into the timing and frequency of assessments. This time-series analysis reveals patterns that could be aligned with academic terms or key learning milestones. Thes spikes may correspond with midterms or finals. Understanding these patterns helps educators refine their curriculum design, ensuring that quizzes are appropriately spaced to avoid overwhelming students and to maximize learning outcomes.
+
+
+```{r,  echo=FALSE}
+quiz_data |>
+  group_by(quiz_status) |>
+  summarise(count = n()) |>
+  ggplot(aes(x = quiz_status, y = count, fill = quiz_status)) +
+  geom_bar(stat = 'identity') +
+  theme_minimal() +
+  labs(title = "Distribution of Quiz Statuses", x = "Quiz Status", y = "Count")
+
+```
+
+```{r,  echo=FALSE}
+quiz_data |>
+  ggplot(aes(x = time_limit)) +
+  geom_histogram(binwidth = 10, fill = 'lightgreen', color = 'black') +
+  theme_minimal() +
+  labs(title = "Distribution of Quiz Time Limits", x = "Time Limits (minutes)", y = "count")
+```
+The distribution of time limits for quizzes highlights how much time students are given to complete assessments. A wide range of time limits might indicate variability in the complexity of quizzes or differences in instructor expectations. However, large discrepancies could also point to inconsistencies in how assessments are designed across courses. Ensuring that time limits are appropriately set and uniformly applied can lead to more reliable data on student performance and better support Learning Analytics efforts.
+
+
+
+
+
+```{r,  echo=FALSE}
+quiz_data |>
+  mutate(lockdown_required = ifelse(is_browser_lockdown_required == TRUE, "Yes", "No")) |>
+  group_by(lockdown_required) |>
+  summarise(count = n()) |>
+  ggplot(aes(x = lockdown_required, y = count, fill = lockdown_required)) +
+  geom_bar(stat = 'identity') +
+  theme_minimal() +
+  labs(title = "Quizzes Requiring Lockdown Browser", x = "Lockdown Required", y = "Count")
+```
+
+```{r,  echo=FALSE}
+quiz_data |>
+  group_by(type) |>
+  summarise(count = n()) |>
+  ggplot(aes(x = type, y = count, fill = type)) +
+  geom_bar(stat = 'identity') +
+  theme_minimal() +
+  labs(title = "Distribution of Quiz Types", x = "Quiz Types", y = "Count")
+```
+
+
+```{r,  echo=FALSE}
+ggplot(quiz_data, aes(x = quiz_item_count, y = quiz_points_possible)) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  theme_minimal() +
+  labs(title = "Quiz Points Possible vs. Quiz Item Count",
+       x = "Quiz Item Count",
+       y = "Quiz Points Possible")
+```
+This scatter plot with a linear regression line explores the relationship between the number of items in a quiz and the total points possible. A positive correlation suggests that quizzes with more items tend to have higher point totals, which could imply that more comprehensive quizzes are being given greater weight in the gradebook. Understanding this relationship helps instructors design quizzes that appropriately reflect the breadth and depth of material covered, ensuring that the gradebook accurately represents student effort and learning outcomes.
+
+
+
+```{r,  echo=FALSE}
+ggplot(quiz_data, aes(y = reorder(course_number, quiz_points_possible), x = quiz_points_possible)) +
+  geom_boxplot(fill = "orange", color = "black", outlier.color = "red", outlier.shape = 1) +
+  theme_minimal() +
+  labs(title = "Distribution of Quiz Points Possible by Course",
+       x = "Quiz Points Possible",
+       y = "Course Number") +
+  theme(axis.text.y = element_text(size = 8))
+```
+
+```{r,  echo=FALSE}
+quiz_data |>
+  mutate(quiz_created_month = format(quiz_created_date, "%Y-%m")) |>
+  count(quiz_created_month, allowed_attempts) |>
+  ggplot(aes(x = quiz_created_month, y = allowed_attempts, fill = n)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "lightblue", high = "red", na.value = NA) +
+  labs(title = "Heatmap of Quiz Creation Date vs. Allowed Attempts",
+       x = "Quiz Created Month",
+       y = "Allowed Attempts",
+       fill = "Count") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
 
 
 ```
 
+
+```{r,  echo=FALSE}
+quiz2_data <- quiz2_data |>
+  mutate(percentage_score = (score / points_possible) * 100)
+
+# Calculate the average percentage score
+average_score <- mean(quiz2_data$percentage_score, na.rm = TRUE)
+
+# Distribution of scores
+hist(quiz2_data$percentage_score, main = "Distribution of Percentage Scores", xlab = "Percentage Score", col = "lightblue")
+
+```
+
+
+Gradebook practices are essential in ensuring that the data collected from student interactions is both accurate and meaningful. This data serves as the foundation for Learning Analytics, which aims to improve learning outcomes and educational practices by providing actionable insights. For instance, by analyzing the relationship between quiz time limits and student performance, we can infer how well students manage their time under various constraints.
+
+
+
+```{r,  echo=FALSE}
+# Time Limit vs. Percentage Score Plot
+ggplot(quiz2_data, aes(x = time_limit, y = percentage_score)) +
+  geom_point(color = "blue", size = 2, alpha = 0.6) +   
+  geom_smooth(method = "lm", color = "red", se = FALSE, size = 1) +
+  scale_x_continuous(limits = c(0, 150), breaks = seq(0, 150, by = 20)) + 
+  scale_y_continuous(limits = c(0, 120), breaks = seq(0, 120, by = 20)) + 
+  labs(title = "Time Limit vs. Percentage Score", x = "Time Limit (minutes)", y = "Percentage Score") +
+  theme_minimal()  
+
+
+```
+
+The first plot demonstrates the relationship between the time limit set for quizzes and the percentage scores obtained by students. Interestingly, the linear trend suggests a slight decrease in performance as time limits increase. This finding could indicate that shorter, more focused quizzes may be more effective In any case, it emphasizes the importance of setting appropriate time limits and accurately recording them in the gradebook. Doing so ensures that the data reflects the true capabilities of students, free from the effects of poorly designed assessments.
+
+
+```{r,  echo=FALSE}
+
+# Total Attempts vs. Percentage Score Plot
+ggplot(quiz2_data, aes(x = total_attempts, y = percentage_score)) +
+  geom_point(color = "green", size = 2, alpha = 0.6) +
+  geom_smooth(method = "lm", color = "red", se = FALSE, size = 1) + 
+  scale_x_continuous(limits = c(0, 30), breaks = seq(0, 30, by = 5)) +  
+  scale_y_continuous(limits = c(0, 120), breaks = seq(0, 120, by = 20)) +  
+  labs(title = "Total Attempts vs. Percentage Score", x = "Total Attempts", y = "Percentage Score") +
+  theme_minimal(base_size = 15) 
+
+
+```
+
+In this plot, we observe the correlation between the number of attempts allowed on quizzes and the percentage scores achieved. Here, a positive trend is evident, showing that increased attempts generally lead to higher scores. This highlights the importance of setting appropriate policies for quiz attempts, as it directly influences student performance. By accurately recording the total attempts in the gradebook, instructors can better understand student persistence and its impact on learning outcomes.
+
+
+
+
+```{r,  echo=FALSE}
+
+# Analyze the relationship between time taken and score
+ggplot(quiz2_data, aes(x = time_taken, y = percentage_score)) +
+  geom_point(color = "orange") +
+  geom_smooth(method = "lm", color = "blue") +
+  labs(title = "Time Taken vs. Percentage Score", x = "Time Taken (seconds)", y = "Percentage Score")
+
+
+
+# Segment students based on performance
+quiz2_data$performance_segment <- cut(quiz2_data$percentage_score, breaks = c(0, 50, 75, 100), labels = c("Low", "Medium", "High"))
+
+# Analyze the distribution of segments
+segment_distribution <- table(quiz2_data$performance_segment)
+barplot(segment_distribution, main = "Student Performance Segments", xlab = "Performance Segment", ylab = "Number of Students", col = "green")
+
+
+
+
+```
 
 
 
