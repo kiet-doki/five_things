@@ -41,9 +41,14 @@ Additionally, embedding content enhances the student experience by providing sea
 ### 6. Communication About Technology and Data Usage
 
 Transparent communication with students about the technology used in the course and how their data will be tracked is crucial for building trust and ensuring compliance with privacy regulations, such as FERPA. To achieve this, educators should:
-Inform Students: Clearly explain which technologies and tools will be used in the course, how data will be collected, and the purpose of this data collection.
-Align Data with Goals: Ensure that the data being measured aligns with the instructional goals of the course. Communicate how this data will help enhance their learning experience.
-Ensure Accessibility: Regularly check that all students can access course materials by scanning for accessibility issues and addressing any that arise.
+
+#### Inform Students: 
+Clearly explain which technologies and tools will be used in the course, how data will be collected, and the purpose of this data collection.
+#### Align Data with Goals: 
+Ensure that the data being measured aligns with the instructional goals of the course. Communicate how this data will help enhance their learning experience.
+#### Ensure Accessibility: 
+Regularly check that all students can access course materials by scanning for accessibility issues and addressing any that arise.
+
 By openly discussing the purpose and use of data collection, educators can create a supportive learning environment where students feel informed and valued. This transparency helps students understand how learning analytics can benefit their educational experience and encourages them to engage more fully with the course. Ensuring compliance with privacy regulations and maintaining open lines of communication also helps build trust and facilitates a more effective learning experience.
 
 ### Conclusion
