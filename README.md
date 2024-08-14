@@ -1,6 +1,7 @@
 # five_things
 
-Explored the impacts of course design and implementation in Canvas and the broader Digital Learning Enviornment (DLE). Focused on identifying the five most important components for learning analytics:
+Learning Analytics (LA) involves collecting, analyzing, and reporting data about learners to enhance educational outcomes. LA enables educators to track student progress, make informed curriculum decisions, and identify at-risk students. However, the effectiveness of LA is closely tied to course design, as well-structured courses are crucial for gathering accurate and actionable data. This project examines how intentional course design can maximize LA's potential, highlighting key strategies for educators.
+
 
 - Clear and consistent naming conventions for assignments and materials
 - Use of due dates on assignments
