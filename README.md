@@ -1,4 +1,4 @@
-# five_things
+# Leveraging Learning Analytics through Thoughtful Course Design
 
 Learning Analytics (LA) involves collecting, analyzing, and reporting data about learners to enhance educational outcomes. LA enables educators to track student progress, make informed curriculum decisions, and identify at-risk students. However, the effectiveness of LA is closely tied to course design, as well-structured courses are crucial for gathering accurate and actionable data. This project examines how intentional course design can maximize LA's potential, highlighting key strategies for educators.
 
